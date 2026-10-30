@@ -1,0 +1,20 @@
+# Python
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# Virtual environment
+.venv/
+venv/
+
+# Local data - never commit chat history or uploaded documents
+data/
+*.db
+*.sqlite3
+sample_pdfs/
+*.pdf
+
+# Secrets / editor
+.env
+.streamlit/secrets.toml
+.vscode/
