@@ -6,7 +6,13 @@ import streamlit as st
 
 from ai.model import ModelError, check_model_status
 from config import HISTORY_CONTEXT_MESSAGES, MAX_FILE_SIZE_MB, MODEL_NAME
-from database.db import clear_messages, init_db, load_messages, save_message
+from database.db import (
+    clear_messages,
+    format_local_time,
+    init_db,
+    load_messages,
+    save_message,
+)
 from services.chat import answer_general_question
 from services.document_qa import answer_document_question
 from services.pdf_handler import PDFError, process_pdf
@@ -15,6 +21,10 @@ from services.summarizer import summarize_document
 AI_NOTICE = "AI-generated - may be inaccurate, please verify."
 MODE_GENERAL = "General chat"
 MODE_DOCUMENT = "Ask about PDF"
+HISTORY_WARNING = (
+    "Could not save history - disk may be full. "
+    "The app still works, but this conversation may not be kept after a restart."
+)
 
 st.set_page_config(page_title="StudyMate AI", page_icon=":books:", layout="wide")
 
@@ -29,6 +39,7 @@ def init_session_state() -> None:
         "uploader_key": 0,
         "model_status": None,
         "flash": None,
+        "history_warning_shown": False,
     }
     for key, value in defaults.items():
         if key not in st.session_state:
@@ -48,8 +59,23 @@ def clear_document() -> None:
 
 
 def clear_history() -> None:
-    clear_messages()
-    st.session_state.flash = "Chat history cleared."
+    if clear_messages():
+        st.session_state.flash = "Chat history cleared."
+    else:
+        st.session_state.flash = "Could not clear chat history - the database may be full or locked."
+
+
+def warn_history_problem() -> None:
+    """Show the history warning at most once per run."""
+    if not st.session_state.history_warning_shown:
+        st.warning(HISTORY_WARNING)
+        st.session_state.history_warning_shown = True
+
+
+def save_to_history(role: str, content: str, mode: str) -> None:
+    """Save a message; if the database write fails, warn and keep going."""
+    if not save_message(role, content, mode):
+        warn_history_problem()
 
 
 def handle_upload(uploaded_file) -> None:
@@ -123,14 +149,19 @@ def render_history() -> None:
     if not messages:
         st.info("No messages yet. Ask a question below, or upload a PDF from the sidebar.")
     for message in messages:
-        render_message(message["role"], message["content"], message["mode"], message["created_at"])
+        render_message(
+            message["role"],
+            message["content"],
+            message["mode"],
+            format_local_time(message["created_at"]),
+        )
 
 
 # ---------- actions ----------
 
 def run_summary(document: dict) -> None:
     request = f"Summarize the document **{document['name']}**."
-    save_message("user", request, "document")
+    save_to_history("user", request, "document")
     render_message("user", request, "document")
 
     with st.chat_message("assistant"):
@@ -157,7 +188,7 @@ def run_summary(document: dict) -> None:
             )
         st.markdown(summary)
         st.caption(f"Document | {AI_NOTICE}")
-    save_message("assistant", summary, "document")
+    save_to_history("assistant", summary, "document")
 
 
 def format_document_answer(result: dict, document_name: str) -> str:
@@ -178,7 +209,7 @@ def handle_prompt(prompt: str, mode_label: str, document: dict | None) -> None:
 
     mode = "document" if mode_label == MODE_DOCUMENT else "general"
     history = load_messages(limit=HISTORY_CONTEXT_MESSAGES * 2)
-    save_message("user", question, mode)
+    save_to_history("user", question, mode)
     render_message("user", question, mode)
 
     result = None
@@ -201,14 +232,16 @@ def handle_prompt(prompt: str, mode_label: str, document: dict | None) -> None:
                 for index, chunk in result["sources"]:
                     st.markdown(f"**Excerpt {index + 1}**")
                     st.caption(chunk[:600] + ("..." if len(chunk) > 600 else ""))
-    save_message("assistant", reply, mode)
+    save_to_history("assistant", reply, mode)
 
 
 # ---------- page ----------
 
 def main() -> None:
-    init_db()
     init_session_state()
+    st.session_state.history_warning_shown = False  # allow one warning per run
+    if not init_db():
+        warn_history_problem()
     render_sidebar()
 
     st.title(":books: StudyMate AI")
