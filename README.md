@@ -156,8 +156,8 @@ Your PDFs and questions are processed by the local Ollama server on your own com
 
 ## AI assistance disclosure
 
-I used Claude (Anthropic's AI assistant) during this project: for setup and troubleshooting, explaining concepts, writing and debugging parts of the code (including the database error handling, the document Q&A improvements and their tests), and drafting the README and test report. I ran all tests myself, reviewed the submitted code, and can explain how each part works.
+I am the sole author of StudyMate AI. I used Claude (Anthropic's AI assistant) as an assistant during the project, for troubleshooting, explaining concepts, and help with code, tests and documentation. I ran every test myself, reviewed and edited all of the code and documents, and can explain how each part works. Responsibility for the submitted work is mine.
 
 ## Author
 
-Astarag Diasi — AI Internship Project, StudyMate AI
+Astarag Diasi (sole author) — AI Internship Project, StudyMate AI

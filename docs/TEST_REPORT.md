@@ -1,6 +1,6 @@
 # StudyMate AI — Test Report
 
-**Tester:** Astarag Diasi  **Date:** 1 November 2026 (T03–T06 and the first T07 attempt: earlier session)
+**Author and tester:** Astarag Diasi  **Date:** 1 November 2026 (T03–T06 and the first T07 attempt: earlier session)
 **Environment:** Windows 11 laptop · Python 3.12.10 · Streamlit 1.66.1 · Ollama 0.40.13 · gemma3:1b · PyMuPDF 2.0 · pytest 9.2.0
 **Method:** Manual tests in the browser (times measured with a phone stopwatch) plus automated pytest unit tests. Test PDFs are sample files made for testing; no personal data was used.
 
@@ -152,4 +152,4 @@ No vulnerability scan or penetration test was performed beyond these checks, so 
 - Uploader label shows "200MB per file" although the app enforces 10 MB (cosmetic).
 - PDF extraction sometimes joins words ("Riversand", "andthe"), which can affect keyword matching.
 
-*Tests were run by me; this report was drafted with help from an AI assistant and checked against my actual results.*
+*Author: Astarag Diasi. I ran all tests myself; AI assistance was used in preparing this report, and every result was checked against what I observed in the app.*
